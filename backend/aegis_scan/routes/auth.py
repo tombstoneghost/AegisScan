@@ -9,7 +9,7 @@ from aegis_scan import db, bcrypt
 
 
 
-bp = Blueprint('auth', __name__, url_prefix='/auth')
+bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 
 
 # Register Route

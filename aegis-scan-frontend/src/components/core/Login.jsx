@@ -5,6 +5,7 @@ import axios from 'axios';
 import {API_BASE} from '../config';
 import { useNavigate } from "react-router-dom";
 import { showError, showLoading, showSuccess } from "../utils/misc";
+import Cookies from 'js-cookie'
 
 const LoginPage = () => {
     const [data, setData] = useState({
@@ -34,7 +35,7 @@ const LoginPage = () => {
         .then(resp => {
             if(resp.data.access_token) {
                 setData({...data, msg: resp.data.msg, success: true, error: false, loading: false})
-                localStorage.setItem('token', resp.data.access_token)
+                Cookies.set('token', resp.data.access_token)
                 navigate('/dashboard')
 
             } else {

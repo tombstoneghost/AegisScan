@@ -35,10 +35,23 @@ def create_app():
 
     from .routes import core, auth
 
-    app.register_blueprint(core.bp)
-    app.register_blueprint(auth.bp)
+    BLUEPRINTS = [
+        core.bp, 
+        auth.bp
+    ]
+
+    register_blueprints(app, BLUEPRINTS)
 
     with app.app_context():
         db.create_all()
 
     return app
+
+
+# Register Blueprints Wrapper
+def register_blueprints(app, blueprints: list):
+    """
+    Function to register all provided blueprints
+    """
+    for blueprint in blueprints:
+        app.register_blueprint(blueprint)

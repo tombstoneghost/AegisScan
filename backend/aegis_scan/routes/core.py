@@ -1,7 +1,7 @@
 # Imports
 from flask import Blueprint, jsonify
 
-bp = Blueprint('core', __name__, url_prefix='/core')
+bp = Blueprint('core', __name__, url_prefix='/api/core')
 
 
 # Index Route

@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+    backend:
+        build:
+            context: ./backend
+            dockerfile: Dockerfile
+        container_name: backend
+        environment:
+            - FLASK_ENV=production
+        volumes:
+            - ./backend/aegis_scan:/app/aegis_scan
+            - db_data:/app/aegis_scan/instance/aegis.db
+        ports:
+            - "5000:5000"
+    
+    frontend:
+        build: 
+            context: ./aegis-scan-frontend
+            dockerfile: Dockerfile
+        container_name: frontend
+        ports:
+            - "3000:3000"
+        depends_on:
+            - backend
+
+    nginx:
+        image: nginx:alpine
+        container_name: nginx
+        ports:
+            - "80:80"
+        volumes:
+            - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+        depends_on:
+            - frontend
+            - backend        
+
+volumes:
+    db_data:
