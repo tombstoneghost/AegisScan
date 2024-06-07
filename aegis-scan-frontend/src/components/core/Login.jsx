@@ -36,8 +36,11 @@ const LoginPage = () => {
             if(resp.data.access_token) {
                 setData({...data, msg: resp.data.msg, success: true, error: false, loading: false})
                 Cookies.set('token', resp.data.access_token)
-                navigate('/dashboard')
-
+                if(username === 'admin') {
+                    navigate('/admin')
+                } else {
+                    navigate('/dashboard')
+                }
             } else {
                 setData({...data, msg: resp.data.msg, success: false, error: true, loading: false})
             }

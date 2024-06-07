@@ -2,3 +2,13 @@
     background: rgb(2,0,36);
     background: linear-gradient(189deg, rgba(2,0,36,1) 0%, rgba(9,9,121,1) 7%, rgba(0,212,255,1) 100%); 
 }
+
+.HeaderClass {
+    background: rgb(6,1,84);
+    background: linear-gradient(270deg, rgba(6,1,84,1) 0%, rgba(19,103,182,1) 100%);
+}
+
+.SideMenuBg {
+    background: rgb(6,1,84);
+    background: linear-gradient(62deg, rgba(6,1,84,1) 0%, rgba(19,103,182,1) 100%);
+}

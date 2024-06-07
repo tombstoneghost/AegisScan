@@ -33,11 +33,12 @@ def create_app():
     
     CORS(app)
 
-    from .routes import core, auth
+    from .routes import core, auth, user
 
     BLUEPRINTS = [
         core.bp, 
-        auth.bp
+        auth.bp,
+        user.bp
     ]
 
     register_blueprints(app, BLUEPRINTS)

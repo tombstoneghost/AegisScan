@@ -1,0 +1,1 @@
+docker run -d -u zap -p 8080:8080 -i --name zap zaproxy/zap-stable zap.sh -daemon -host 0.0.0.0 -port 8080 -config api.addrs.addr.name=172.17.0.1 -config api.addrs.addr.regex=false -config api.key=api_key

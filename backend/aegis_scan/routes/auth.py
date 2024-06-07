@@ -1,6 +1,7 @@
 """
 Authentication Routes
 """
+import datetime
 from flask import Blueprint, request, jsonify
 from flask_login import login_user, logout_user
 from flask_jwt_extended import create_access_token, jwt_required
@@ -22,6 +23,7 @@ def register():
     username = data.get('username')
     email = data.get('email')
     password = data.get('password')
+    role = data.get('role')
 
     if User.query.filter_by(email=email).first():
         return jsonify({"msg": "Email already used"})
@@ -31,7 +33,7 @@ def register():
     
 
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-    user = User(username=username, email=email, password=hashed_password) # type: ignore
+    user = User(username=username, email=email, password=hashed_password, role=role) # type: ignore
     db.session.add(user)
     db.session.commit()
 
@@ -52,7 +54,7 @@ def login():
 
     if user and bcrypt.check_password_hash(user.password, password):
         login_user(user, remember=True)
-        access_token = create_access_token(identity=user.id)
+        access_token = create_access_token(identity=user.id, expires_delta=datetime.timedelta(hours=12))
         return jsonify({'msg': 'Login Successful', 'access_token': access_token})
     
     return jsonify({'msg': 'Invalid Credentials'})

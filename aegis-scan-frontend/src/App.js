@@ -4,7 +4,7 @@ import Index from './components/Index';
 
 function App() {
 	return (
-		<div className="App">
+		<div>
 			<Index />
 		</div>
   	);

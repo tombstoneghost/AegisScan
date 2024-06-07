@@ -14,6 +14,7 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(20), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(60), nullable=False)
+    role = db.Column(db.String(10), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now())
 
     def __repr__(self) -> str:
