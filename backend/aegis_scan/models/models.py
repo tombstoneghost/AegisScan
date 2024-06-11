@@ -16,6 +16,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(60), nullable=False)
     role = db.Column(db.String(10), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now())
+    scan = db.relationship('Scan', backref='user', lazy=True)
 
     def __repr__(self) -> str:
         return f"User('{self.username}', '{self.email}')"
@@ -27,3 +28,31 @@ def load_user(user_id):
     Load User based on his id
     """
     return User.query.get(int(user_id))
+
+
+class Scan(db.Model):
+    """
+    Model to store all scans
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    scan_id = db.Column(db.String(32), nullable=False, unique=True)
+    url = db.Column(db.String(512), nullable=False)
+    scan_type = db.Column(db.String(50), nullable=False)
+    status = db.Column(db.String(50), nullable=False)
+    result = db.Column(db.Text, nullable=True)
+    start_time = db.Column(db.DateTime, nullable=False, default=datetime.now())
+    end_time = db.Column(db.DateTime, nullable=True)
+    duration = db.Column(db.Float, nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_scan_user'), nullable=False)
+    spider_scan_id = db.Column(db.String(32), nullable=True)
+    active_scan_id = db.Column(db.Text, nullable=True)
+
+    def __init__(self, scan_id, url, scan_type, status, user_id, result=None, end_time=None, duration=None) -> None:
+        self.scan_id = scan_id
+        self.url = url
+        self.scan_type = scan_type
+        self.status = status
+        self.user_id = user_id
+        self.result = result
+        self.end_time = end_time
+        self.duration = duration

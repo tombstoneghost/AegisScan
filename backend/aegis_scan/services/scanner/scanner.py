@@ -2,9 +2,10 @@
 Using ZAP SDK to perform initally scanning
 """
 import time
-import pprint
 
 from aegis_scan.config import Config
+from aegis_scan import db
+from aegis_scan.models.models import Scan
 from zapv2 import ZAPv2
 
 
@@ -16,22 +17,23 @@ class Scanner:
     def __init__(self) -> None:
         self.api_key = Config.ZAP_API_KEY
 
-    def spider(self, zap: ZAPv2, target: str):
+    def spider_scan(self, zap: ZAPv2, target: str):
         """
         Function to use Spider Module against the target
         """
         scan_id = zap.spider.scan(target)
-        while int(zap.spider.status(scanid=scan_id)) < 100:
-            progress = zap.spider.status(scan_id)
-            print(f"Spider Progress: {progress}")
-            time.sleep(1)
+        
+        return scan_id
+    
+    def active_scan(self, zap: ZAPv2, target: str):
+        """
+        Function to use Active Scan Module against the target
+        """
+        scan_id = zap.ascan.scan(target)
 
-        print("Scan Results")
-        results = zap.spider.results(scanid=scan_id)
+        return scan_id
 
-        return results
-
-    def passive(self, zap: ZAPv2):
+    def passive_scan(self, zap: ZAPv2):
         """
         Function to use Passive Scan Module against the target
         """
@@ -39,42 +41,52 @@ class Scanner:
             print('Passive Scan:', zap.pscan.records_to_scan)
             time.sleep(2)
 
-        hosts = ', '.join(zap.core.hosts)
         alerts = zap.core.alerts()
 
-        print(f'Hosts: {hosts}')
-        print('Alerts: ')
-        pprint.pprint(alerts)
-
-    def active(self, zap: ZAPv2, target: str):
+        return alerts
+    
+    def get_spider_status(self, scan_id: str, scan):
         """
-        Function to use Active Scan Module against the target
+        Get Spider Scan Progress
         """
-        print(f"Running Active Scan on {target}")
-        scan_id = zap.ascan.scan(target)
+        zap = ZAPv2(apikey=self.api_key)
+        status = int(zap.spider.status(scanid=scan_id))
 
-        while int(zap.ascan.status(scanid=scan_id)) < 100:
-            progress = zap.ascan.status(scanid=scan_id)
-            print(f'Scan Progress: {progress}')
+        if status == 'does_not_exist':
+            db.session.delete(scan)
+            db.session.commit()
+        else:
+            if status == 100:
+                scan.status = "Spider Completed"
+                db.session.commit()
+            else:
+                scan.status = "Spider In-Progress"
+                db.session.commit()
 
-            time.sleep(2)
+        return scan.status
+    
+    def get_spider_results(self, zap: ZAPv2, scan_id: str):
+        """
+        Get Spider Scan Resulst
+        """
+        results = zap.spider.results(scanid=scan_id)
 
-        print('Alerts:')
-        pprint.pprint(zap.core.alerts(baseurl=target))
+        return results
 
-    def init_scanner(self, target: str):
+    def init_scanner(self, target: str, user_id: str):
         """
         Initialize Scanner Service
         """
         zap = ZAPv2(apikey=self.api_key)
-
-        targets_found = self.spider(zap=zap, target=target)
-        # self.passive(zap=zap)
         
-        for t in targets_found:
-            self.active(zap=zap, target=t)
+        last_scan_id = db.session.query(Scan).count() + 1
+        scan_id = f"SCAN{last_scan_id:04d}"
 
+        scan = Scan(scan_id=scan_id, url=target, scan_type="Web", status="Running", user_id=user_id)
+        db.session.add(scan)
+        db.session.commit()
 
-TARGET_URL = "https://public-firing-range.appspot.com/"
-scanner = Scanner()
-scanner.init_scanner(target=TARGET_URL)
+        spider_scan_id = self.spider_scan(zap=zap, target=target)
+
+        scan.spider_scan_id = spider_scan_id
+        db.session.commit()

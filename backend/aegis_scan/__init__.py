@@ -8,12 +8,14 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
 from flask_jwt_extended import JWTManager
+from flask_migrate import Migrate, migrate
 
 
 db = SQLAlchemy()
 bcrypt = Bcrypt()
 login_manager = LoginManager()
 jwt = JWTManager()
+migrate = Migrate()
 
 
 def create_app():
@@ -27,6 +29,7 @@ def create_app():
     bcrypt.init_app(app)
     login_manager.init_app(app)
     jwt.init_app(app)
+    migrate.init_app(app, db)
     
     # login_manager.login_view = 'auth.login'
     login_manager.login_message_category = 'info'
