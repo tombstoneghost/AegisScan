@@ -7,7 +7,7 @@ const SideMenu = () => {
     const MenuItems = [
         {
             "name": "New Scan",
-            "href": "/"
+            "href": "/dashboard"
         },
         {
             "name": "All Scans",
