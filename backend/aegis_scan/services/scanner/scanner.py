@@ -26,7 +26,8 @@ class Scanner:
         """
         Function to use Spider Module against the target
         """
-        scan_id = zap.spider.scan(target)
+        # zap.spider.set_option_max_depth(5)
+        scan_id = zap.ajaxSpider.scan(target)
         
         return scan_id
     
@@ -35,7 +36,7 @@ class Scanner:
         Function to use Active Scan Module against the target
         """
         spider_scan_id = self.spider_scan(zap=zap, target=target)
-        while int(zap.spider.status()) < 100:
+        while int(zap.ajaxSpider.status()) < 100:
             pass
 
         print("AScan", target)
@@ -60,15 +61,16 @@ class Scanner:
         """
         Get Spider Scan Progress
         """
-        status = int(zap.spider.status(scanid=scan_id))
+        status = zap.ajaxSpider.status
 
         if status == 'does_not_exist':
             status = "Failed"
             scan.status = status
             db.session.commit()
         else:
-            if status == 100:
-                result = self.get_spider_results(zap=zap, scan_id=scan_id)
+            if status == "stopped":
+                result = self.get_spider_results(zap=zap)
+                result = json.dumps(result)
 
                 scan.result = result
                 scan.status = "Spider Completed"
@@ -164,9 +166,9 @@ class Scanner:
                 status, progress = self.get_spider_status(scan_id=scan_id, scan=scan, zap=zap)
 
             if "Spider Completed" in status:
-                spider_results = self.get_spider_results(zap=zap, scan_id=scan_id)
+                spider_results = self.get_spider_results(zap=zap)
 
-                spider_results = spider_results.split(",")
+                spider_results = json.dumps(spider_results)
 
                 scan.spider_result = spider_results
         
@@ -207,13 +209,11 @@ class Scanner:
         
         return status, progress
           
-    def get_spider_results(self, zap: ZAPv2, scan_id: str):
+    def get_spider_results(self, zap: ZAPv2):
         """
         Get Spider Scan Results
         """
-        results = zap.spider.results(scanid=scan_id)
-
-        results = ",".join(results)
+        results = zap.ajaxSpider.results()
 
         return results
     
@@ -231,7 +231,9 @@ class Scanner:
         """
         zap = ZAPv2(apikey=self.api_key)
         
-        last_scan_id = db.session.query(Scan).count() + 1
+        last_scan = db.session.query(Scan).order_by(Scan.id.desc()).first()
+        last_scan_id = int(str(getattr(last_scan, "scan_id")).split("SCAN")[1]) + 1
+
         scan_id = f"SCAN{last_scan_id:04d}"
 
         scan = Scan(scan_id=scan_id, url=target, scan_type=scan_type, target_type="Web", status="Running", user_id=user_id)

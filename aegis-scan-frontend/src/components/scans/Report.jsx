@@ -33,7 +33,7 @@ const Report = () => {
                 Authorization: `Bearer ${token}`
             }
         }).then(resp => {
-            console.log(resp.data.result);
+            // console.log(resp.data.result);
             setScanDetail(resp.data.result);
         })
     };

@@ -40,7 +40,6 @@ const UserDashboard = () => {
 
             console.log(scan_ids);
 
-
             return Promise.all(
                 scan_ids.map(scan_id => 
                     axios.get(`${API_BASE}/user/scan/status/${scan_id}`, {
