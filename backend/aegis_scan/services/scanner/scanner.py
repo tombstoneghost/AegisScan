@@ -1,6 +1,7 @@
 """
 Using ZAP SDK to perform initally scanning
 """
+import datetime
 import json
 import time
 
@@ -9,6 +10,7 @@ import requests
 from aegis_scan.config import Config
 from aegis_scan import db
 from aegis_scan.models.models import Scan
+from aegis_scan.prediction.prediction import predict
 from zapv2 import ZAPv2
 
 
@@ -36,7 +38,7 @@ class Scanner:
         Function to use Active Scan Module against the target
         """
         spider_scan_id = self.spider_scan(zap=zap, target=target)
-        while int(zap.ajaxSpider.status()) < 100:
+        while zap.ajaxSpider.status == 'running':
             pass
 
         print("AScan", target)
@@ -74,6 +76,7 @@ class Scanner:
 
                 scan.result = result
                 scan.status = "Spider Completed"
+                scan.end_time = datetime.datetime.now()
                 db.session.commit()
             else:
                 scan.status = "Spider In-Progress"
@@ -123,7 +126,7 @@ class Scanner:
 
         self.passive_scan_status = "Passive Completed"
 
-        return json.dumps(alerts)
+        return alerts
 
     def run_active_scan(self, zap: ZAPv2, targets: list, scan):
         """
@@ -134,7 +137,6 @@ class Scanner:
         print("Targets", targets)
 
         for t in targets:
-            print("t", t)
             scan_id = self.active_scan(zap=zap, target=t)
             active_scan_ids.append(scan_id)
 
@@ -152,6 +154,7 @@ class Scanner:
         # Get current status
         status = scan.status
         progress = 0
+        application_type = scan.application_type
 
         # Get scan type
         scan_type = scan.scan_type
@@ -170,6 +173,9 @@ class Scanner:
 
                 spider_results = json.dumps(spider_results)
 
+                end_time = datetime.datetime.now()
+
+                scan.end_time = end_time
                 scan.spider_result = spider_results
         
         if scan_type == 'active':
@@ -180,10 +186,15 @@ class Scanner:
                 for sid in active_scan_ids:
                     scan_status = self.get_active_status(scan_id=sid, zap=zap, scan=scan)
                     progress = scan_status
-                    print("Scan Status: ", sid, scan_status)
                     if scan_status == 100:
                         self.completed_active_scan.append(scan_id)
                         active_result = self.get_active_results(zap=zap, scan_id=sid)
+                        active_result = predict(active_result, application_type=application_type)
+
+                        priority_order = {"High": 1, "Medium": 2, "Low": 3, "Informational": 4}
+
+                        active_result = sorted(active_result, key=lambda alert: priority_order.get(alert.get('ai_priority', 'Informational'), 4))
+
                         if scan.result is not None:
                             scan.result = scan.result + "$#$" + json.dumps(active_result)
                         else:
@@ -225,18 +236,21 @@ class Scanner:
 
         return alerts
 
-    def init_scanner(self, target: str, user_id: str, scan_type: str):
+    def init_scanner(self, target: str, user_id: str, scan_type: str, app_type: str):
         """
         Initialize Scanner Service
         """
         zap = ZAPv2(apikey=self.api_key)
         
         last_scan = db.session.query(Scan).order_by(Scan.id.desc()).first()
-        last_scan_id = int(str(getattr(last_scan, "scan_id")).split("SCAN")[1]) + 1
+        if last_scan is not None:
+            last_scan_id = int(str(getattr(last_scan, "scan_id")).split("SCAN")[1]) + 1
+        else:
+            last_scan_id = 1
 
         scan_id = f"SCAN{last_scan_id:04d}"
 
-        scan = Scan(scan_id=scan_id, url=target, scan_type=scan_type, target_type="Web", status="Running", user_id=user_id)
+        scan = Scan(scan_id=scan_id, url=target, scan_type=scan_type, application_type=app_type, target_type="Web", status="Running", user_id=user_id)
         db.session.add(scan)
         db.session.commit()
 
@@ -246,7 +260,6 @@ class Scanner:
             db.session.commit()
         
         if scan_type == 'active':
-            print("Target", target)
             self.run_active_scan(scan=scan, targets=[target], zap=zap)
 
             status = "Running Active Scan"
@@ -255,6 +268,12 @@ class Scanner:
 
         if scan_type == 'passive':
             alerts = self.run_passive_scan(zap=zap, target=target)
-            scan.result = alerts
+            alerts = predict(alerts=alerts, application_type=app_type)
+
+            priority_order = {"High": 1, "Medium": 2, "Low": 3, "Informational": 4}
+
+            alerts = sorted(alerts, key=lambda alert: priority_order.get(alert.get('ai_priority', 'Informational'), 4))
+
+            scan.result = json.dumps(alerts)
             scan.status = "Passive Completed"
             db.session.commit()

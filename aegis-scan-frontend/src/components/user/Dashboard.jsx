@@ -10,6 +10,7 @@ import { Visibility, RestartAlt } from '@mui/icons-material'
 const UserDashboard = () => {
     const [target, setTarget] = useState('')
     const [scanType, setScanType] = useState('')
+    const [appType, setAppType] = useState('')
     const [msg, setMsg] = useState('')
     const [err, setErr] = useState('')
     const [scans, setScans] = useState([])
@@ -21,6 +22,8 @@ const UserDashboard = () => {
             setTarget(e.target.value);
         } else if(name === 'scanType') {
             setScanType(e.target.value);
+        } else if(name === 'appType') {
+            setAppType(e.target.value)
         }
         
     };
@@ -28,37 +31,36 @@ const UserDashboard = () => {
     const fetchData = async () => {
         const token = Cookies.get('token')
 
-        await axios.get(`${API_BASE}/user/scans/running`, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        })
-        .then(resp => {
-            setScans(resp.data.result);
+        try {
+            const resp = await axios.get(`${API_BASE}/user/scans/running`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+    
+            const runningScans = resp.data.result;
 
-            const scan_ids = scans.map((scan) => { return scan.scan_id })
-
-            console.log(scan_ids);
-
-            return Promise.all(
-                scan_ids.map(scan_id => 
-                    axios.get(`${API_BASE}/user/scan/status/${scan_id}`, {
+            setScans(runningScans);
+    
+            const updatedScans = await Promise.all(
+                runningScans.map(scan => 
+                    axios.get(`${API_BASE}/user/scan/status/${scan.scan_id}`, {
                         headers: {
                             Authorization: `Bearer ${token}`
                         }
-                    }).then(statusResp => ({ scan_id, status: statusResp.data.result, progress: statusResp.data.progress }))
+                    }).then(statusResp => ({
+                        ...scan, 
+                        status: statusResp.data.result,
+                        progress: statusResp.data.progress
+                    }))
                 )
             );
-        })
-        .then(updatedScans => {
-            setScans(prevData => 
-                prevData.map(item => {
-                    const updatedScan = updatedScans.find(scan => scan.scan_id === item.scan_id);
-                    return updatedScan ? { ...item, status: updatedScan.status } : item;
-                })
-            );
-        })
-    };
+    
+            setScans(updatedScans);
+        } catch(error) {
+            console.error("Error fetching data:", error)
+        }
+    }
 
     useEffect(() => {
         fetchData();
@@ -75,10 +77,9 @@ const UserDashboard = () => {
 
         const data = {
             'target': target,
-            'scan_type': scanType
+            'scan_type': scanType,
+            'app_type': appType
         };
-
-        console.log(data);
 
         const token = Cookies.get('token')
 
@@ -150,10 +151,29 @@ const UserDashboard = () => {
                             </div>
                             <div className="mt-2">
                                 <FormControl fullWidth>
+                                    <InputLabel id="app-type-label">Application Type</InputLabel>
+                                    <Select
+                                        labelId="app-type-label"
+                                        id="app-type-select"
+                                        label="Application Type"
+                                        onChange={handleChange('appType')}>
+                                        <MenuItem value={"ecom"}>E-Com</MenuItem>
+                                        <MenuItem value={"blog"}>Blog</MenuItem>
+                                        <MenuItem value={"social_media"}>Social Media</MenuItem>
+                                        <MenuItem value={"cms"}>CMS</MenuItem>
+                                        <MenuItem value={"forums"}>Forums</MenuItem>
+                                        <MenuItem value={"educational"}>Educational</MenuItem>
+                                        <MenuItem value={"news_media"}>News Media</MenuItem>
+                                        <MenuItem value={"android"}>Android</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </div>
+                            <div className="mt-2">
+                                <FormControl fullWidth>
                                     <InputLabel id="scan-type-label">Scan Type</InputLabel>
                                     <Select
                                         labelId="scan-type-label"
-                                        id="scan=type-select"
+                                        id="scan-type-select"
                                         label="Scan Type"
                                         onChange={handleChange('scanType')}>
                                         <MenuItem value={"spider"}>Spider</MenuItem>
@@ -201,7 +221,7 @@ const UserDashboard = () => {
                                                         <TableCell align="center">{scan.scan_id}</TableCell>
                                                         <TableCell align="center">{scan.url}</TableCell>
                                                         <TableCell align="center">{String(scan.scan_type).toUpperCase()}</TableCell>
-                                                        <TableCell align="center">{scan.status} {scan.progress}</TableCell>
+                                                        <TableCell align="center">{scan.status}</TableCell>
                                                         <TableCell align="center">
                                                             <IconButton variant="contained" color="success" href={`/scans/${scan.scan_id}`.toLowerCase()} disabled={!String(scan.status).includes('Completed')}>
                                                                 <Visibility />

@@ -2,13 +2,15 @@ import { Card, CardContent, CardHeader, Chip, Typography } from "@mui/material";
 
 const Passive = ({results}) => {
     const getColor = (status) => {
-        if(status === 'Informational') {
+        status = String(status).toLowerCase();
+
+        if(status === 'informational') {
             return "info"
-        } else if(status === 'Low') {
+        } else if(status === 'low') {
             return 'success'
-        } else if(status === 'Medium') {
+        } else if(status === 'medium') {
             return 'warning'
-        } else if(status === 'High') {
+        } else if(status === 'high') {
             return 'error'
         }
     }
@@ -29,6 +31,9 @@ const Passive = ({results}) => {
                                 <Typography><strong>Name: </strong>{alert.name}</Typography>
                                 <Typography><strong>Target: </strong>{alert.url}</Typography>
                                 <div className=" mb-1 row">
+                                    <div className="col">
+                                        <Typography><strong>AI Prediction: </strong><Chip label={String(alert.ai_priority).charAt(0).toUpperCase() + String(alert.ai_priority).slice(1)} color={getColor(alert.ai_priority)}/> </Typography>
+                                    </div>
                                     <div className="col">
                                         <Typography><strong>Risk: </strong><Chip label={alert.risk} color={getColor(alert.risk)}/> </Typography>
                                     </div>

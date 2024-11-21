@@ -60,16 +60,23 @@ const Report = () => {
                         } subheader={scanDetail.url}/>
                         <CardContent>
                             <div className="mb-2">
-                                <Typography variant="body1">Scan ID: <Chip variant="outlined" label={scanDetail.scan_id} /></Typography>
+                                <div className="row">
+                                    <div className="col">
+                                        <Typography variant="body1">Scan ID: <Chip variant="outlined" label={scanDetail.scan_id} /></Typography>
+                                    </div>
+                                    <div className="col">
+                                        <Typography variant="body1">
+                                            Scan Type: <Chip color="success" label={String(scanDetail.scan_type).charAt(0).toLocaleUpperCase() + String(scanDetail.scan_type).slice(1)} />
+                                        </Typography>
+                                    </div>
+                                </div>
                             </div>
                             <div className="row">
                                 <div className="col">
-                                    <Typography variant="body1">
-                                        Scan Type: <Chip color="success" label={String(scanDetail.scan_type).charAt(0).toLocaleUpperCase() + String(scanDetail.scan_type).slice(1)} />
-                                    </Typography>
+                                    <Typography variant="body1">Scan Start Time: <Chip variant="outlined" label={scanDetail.start_time} /></Typography>
                                 </div>
                                 <div className="col">
-                                    <Typography variant="body1">Scan Start Time: <Chip variant="outlined" label={scanDetail.start_time} /></Typography>
+                                    <Typography variant="body1">Scan End Time: <Chip variant="outlined" label={scanDetail.end_time} /></Typography>
                                 </div>
                             </div>
                         </CardContent>

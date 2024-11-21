@@ -25,10 +25,11 @@ def scan_target():
 
     target = data.get('target')
     scan_type = data.get('scan_type')
+    app_type = data.get('app_type')
 
     user_id = get_jwt_identity()
 
-    scanner.init_scanner(target=target, user_id=user_id, scan_type=scan_type)
+    scanner.init_scanner(target=target, user_id=user_id, scan_type=scan_type, app_type=app_type)
 
     return jsonify({'msg': 'URL Submitted for Scanning.'})
 
