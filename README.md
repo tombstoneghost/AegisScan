@@ -78,5 +78,5 @@ This project is licensed under the GNU General Public License (GPL).
 
 ## 👥 Credits
 
-Developed by [Simardeep Singh](https://www.linkedin.com/in/simardeepsingh99/) and [Anikait](https://www.linkedin.com/in/anikait-sabharwal/)  
+Developed by [Simardeep Singh](https://www.linkedin.com/in/simardeepsingh99/) and [Anikait Sabharwal](https://www.linkedin.com/in/anikait-sabharwal/)  
 Special thanks to **Nameesha Shetty** for conference support during **BlackHat MEA 2024**.
